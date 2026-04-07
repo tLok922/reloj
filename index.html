@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reloj</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --clock-bg: #1a1a1a;
+            --text-color: #e0e0e0;
+            --accent-color: #ff3e3e;
+            --shade-color: rgba(255, 255, 255, 0.07);
+            --clock-size: 70vmin; 
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+        }
+
+        .clock {
+            width: var(--clock-size);
+            height: var(--clock-size);
+            background: var(--clock-bg);
+            border-radius: 50%;
+            border: 1.5vmin solid #333;
+            position: relative;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8);
+            margin-bottom: 4vh;
+            overflow: hidden;
+        }
+
+        .shade {
+            position: absolute;
+            width: 100%; height: 100%;
+            top: 0; left: 0;
+            background: conic-gradient(
+                var(--shade-color) 0%, 
+                var(--shade-color) var(--progress, 0%), 
+                transparent var(--progress, 0%), 
+                transparent 100%
+            );
+            z-index: 1;
+        }
+
+        .clock::after {
+            content: '';
+            position: absolute;
+            width: 2.5vmin; height: 2.5vmin;
+            background: var(--text-color);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .number {
+            position: absolute;
+            width: 100%; height: 100%;
+            text-align: center;
+            font-size: 5vmin;
+            font-weight: bold;
+            color: var(--text-color);
+            padding: 3vmin;
+            box-sizing: border-box;
+            z-index: 2;
+        }
+
+        .n1 { transform: rotate(30deg); }   .n1 span { display: inline-block; transform: rotate(-30deg); }
+        .n2 { transform: rotate(60deg); }   .n2 span { display: inline-block; transform: rotate(-60deg); }
+        .n3 { transform: rotate(90deg); }   .n3 span { display: inline-block; transform: rotate(-90deg); }
+        .n4 { transform: rotate(120deg); }  .n4 span { display: inline-block; transform: rotate(-120deg); }
+        .n5 { transform: rotate(150deg); }  .n5 span { display: inline-block; transform: rotate(-150deg); }
+        .n6 { transform: rotate(180deg); }  .n6 span { display: inline-block; transform: rotate(-180deg); }
+        .n7 { transform: rotate(210deg); }  .n7 span { display: inline-block; transform: rotate(-210deg); }
+        .n8 { transform: rotate(240deg); }  .n8 span { display: inline-block; transform: rotate(-240deg); }
+        .n9 { transform: rotate(270deg); }  .n9 span { display: inline-block; transform: rotate(-270deg); }
+        .n10 { transform: rotate(300deg); } .n10 span { display: inline-block; transform: rotate(-300deg); }
+        .n11 { transform: rotate(330deg); } .n11 span { display: inline-block; transform: rotate(-330deg); }
+
+        .hand {
+            position: absolute;
+            bottom: 50%; left: 50%;
+            transform-origin: bottom;
+            border-radius: 20px;
+            transform: translateX(-50%);
+            z-index: 6;
+        }
+
+        .hour { width: 1.8vmin; height: 22%; background: var(--text-color); animation: rotate-clock 43200s linear infinite; }
+        .minute { width: 1.2vmin; height: 35%; background: #a0a0a0; animation: rotate-clock 3600s linear infinite; }
+        .second { width: 0.6vmin; height: 42%; background: var(--accent-color); animation: rotate-clock 60s steps(60) infinite; z-index: 7; }
+
+        @keyframes rotate-clock {
+            from { transform: translateX(-50%) rotate(0deg); }
+            to { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        #countdown-container { text-align: center; color: var(--text-color); }
+        
+        #timer { 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 8vmin; font-weight: bold; 
+            color: var(--text-color); 
+            transition: color 0.3s ease;
+        }
+
+        #timer.warning { color: var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <div class="clock" id="clock-face">
+        <div class="shade" id="shade-layer"></div>
+        <div class="number"><span>XII</span></div>
+        <div class="number n1"><span>I</span></div>
+        <div class="number n2"><span>II</span></div>
+        <div class="number n3"><span>III</span></div>
+        <div class="number n4"><span>IV</span></div>
+        <div class="number n5"><span>V</span></div>
+        <div class="number n6"><span>VI</span></div>
+        <div class="number n7"><span>VII</span></div>
+        <div class="number n8"><span>VIII</span></div>
+        <div class="number n9"><span>IX</span></div>
+        <div class="number n10"><span>X</span></div>
+        <div class="number n11"><span>XI</span></div>
+        <div class="hand hour" id="hour"></div>
+        <div class="hand minute" id="minute"></div>
+        <div class="hand second" id="second"></div>
+    </div>
+
+    <div id="countdown-container">
+        <div id="timer">00:00</div>
+    </div>
+
+    <script>
+        (function() {
+            const timerDisplay = document.getElementById('timer');
+            const clockFace = document.getElementById('clock-face');
+            const hourHand = document.getElementById('hour');
+            const minHand = document.getElementById('minute');
+            const secHand = document.getElementById('second');
+
+            // Sync analog hands
+            const now = new Date();
+            secHand.style.animationDelay = `-${now.getSeconds()}s`;
+            minHand.style.animationDelay = `-${(now.getMinutes() * 60) + now.getSeconds()}s`;
+            hourHand.style.animationDelay = `-${((now.getHours() % 12) * 3600) + (now.getMinutes() * 60) + now.getSeconds()}s`;
+
+            function updateUI() {
+                const currentTime = new Date();
+                
+                // 1. Precise Countdown Calculation
+                const nextHour = new Date(currentTime);
+                nextHour.setHours(currentTime.getHours() + 1, 0, 0, 0);
+                
+                const diffMs = nextHour - currentTime;
+                const totalSecondsLeft = Math.ceil(diffMs / 1000);
+                
+                // If we hit exactly 3600 (top of the hour), it should show 00:00
+                const displaySeconds = totalSecondsLeft % 3600;
+                const mLeft = Math.floor(displaySeconds / 60);
+                const sLeft = displaySeconds % 60;
+
+                timerDisplay.textContent = `${mLeft.toString().padStart(2, '0')}:${sLeft.toString().padStart(2, '0')}`;
+                
+                // Warning Logic (Red text if < 15 mins)
+                if (mLeft < 15 && totalSecondsLeft <= 900) {
+                    timerDisplay.classList.add('warning');
+                } else {
+                    timerDisplay.classList.remove('warning');
+                }
+
+                // 2. Shade Progress (0-100% of the hour)
+                const secondsPassedInHour = (currentTime.getMinutes() * 60) + currentTime.getSeconds();
+                const progressPercent = (secondsPassedInHour / 3600) * 100;
+                clockFace.style.setProperty('--progress', `${progressPercent}%`);
+            }
+
+            setInterval(updateUI, 1000);
+            updateUI();
+        })();
+    </script>
+</body>
+</html>
